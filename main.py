@@ -16,12 +16,14 @@ def main():
 
     selected_box = st.sidebar.selectbox(
     'Choose one of the following',
-    ('Welcome','Image Processing', 'Video', 'Face Detection', 'Feature Detection', 'Object Detection')
+    ('Landing Page','Histogram', 'Image Processing', 'Video', 'Face Detection', 'Feature Detection', 'Object Detection')
     )
     # pilihan menu
 
-    if selected_box == 'Welcome':
-        welcome() 
+    if selected_box == 'Landing Page':
+        landingpage() 
+    if selected_box == 'Histogram':
+        histogram() 
     if selected_box == 'Image Processing':
         photo()
     if selected_box == 'Video':
@@ -34,21 +36,33 @@ def main():
         object_detection() 
  
 
-def welcome():
+def landingpage():
     
-    st.title('Image Processing using Streamlit Ok')
+    st.title('Sistem Pengolahan Citra Untuk Pemrosesan Gambar')
     
-    st.subheader('A simple app that shows different image processing algorithms. You can choose the options'
-             + ' from the left. I have implemented only a few to show how it works on Streamlit. ' + 
-             'You are free to add stuff to this app.')
+    st.subheader('sebuah sistem sederhana yang dirancang untuk mengolah citra dengan tujuan melakukan pemrosesan gambar secara efisien dan efektif. Sistem ini mencakup beberapa teknik pengolahan citra yang dapat diterapkan untuk meningkatkan kualitas, mengoptimalkan informasi, dan menghasilkan gambar yang lebih baik.')
     
-    st.image('hackershrine.jpg',use_column_width=True)
+    st.image('image-processing.jpg',use_column_width=True)
 
 
 def load_image(filename):
     image = cv2.imread(filename)
     return image
- 
+
+def histogram():
+    st.header("Histogram")
+    st.subheader("Histogram citra merupakan diagram yang menggambarkan frekuensi setiap nilai intensitas yang muncul di seluruh piksel citra.")
+    if st.button('Lihat Citra Asli'):
+        
+        original = Image.open('lena.jpg')
+        st.image(original, use_column_width=True)
+    
+    image = cv2.imread('lena.jpg',0)
+    
+    histr = cv2.calcHist([image],[0],None,[256],[0,256])
+    st.bar_chart(histr)
+
+
 def photo():
 
     st.header("Thresholding, Edge Detection and Contours")
