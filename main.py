@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Oct 27 20:37:29 2020
+Created on Tue Jan 2 2024
 
 @author: febri, jaoza, annisa, armeisa
 """
@@ -9,14 +9,14 @@ import streamlit as st
 from PIL import Image
 import cv2 
 import numpy as np
-
+from matplotlib import pyplot as plt
 
 
 def main():
 
     selected_box = st.sidebar.selectbox(
     'Choose one of the following',
-    ('Landing Page','Histogram', 'Image Processing', 'Video', 'Face Detection', 'Feature Detection', 'Object Detection')
+    ('Landing Page','Histogram','Transformasi Geometri', 'Morfologi Citra', 'Image Processing', 'Video', 'Face Detection', 'Feature Detection', 'Object Detection')
     )
     # pilihan menu
 
@@ -24,6 +24,10 @@ def main():
         landingpage() 
     if selected_box == 'Histogram':
         histogram() 
+    if selected_box == 'Transformasi Geometri':
+        transGeo()
+    if selected_box == 'Morfologi Citra':
+        morfCitra()
     if selected_box == 'Image Processing':
         photo()
     if selected_box == 'Video':
@@ -62,6 +66,109 @@ def histogram():
     histr = cv2.calcHist([image],[0],None,[256],[0,256])
     st.bar_chart(histr)
 
+def transGeo():
+    st.header("Transformasi Geometri")
+    st.write("Transformasi geometri terdiri dari beberapa jenis salah satunya ada Translasi dan Rotasi. Dapat dilihat pada contoh dibawah perbedaan diantara keduanya.")
+    st.text("\n")
+
+    #Translasi
+    st.subheader("Translasi")
+    if st.button('Citra Asli Translasi'):
+            
+        original = Image.open('groot.jpg')
+        st.image(original, use_column_width=True)
+    
+    image = cv2.imread('groot.jpg',0)
+    st.write("Berikut hasil citra yang telah dilakukan operasi translasi")
+
+    imggambar = cv2.imread("groot.jpg", -1)
+
+    height, width = imggambar.shape[:2]
+
+    height, width = imggambar.shape[:2]
+
+    quarter_height, quarter_width = -height/2, width/2
+    T = np.float32([[1, 0, quarter_width], [0, 1, quarter_height]])
+    img_translation = cv2.warpAffine(imggambar, T, (width, height))
+
+    # Menampilkan hasil translasi di Streamlit
+    st.image(img_translation, caption="Hasil Translasi", use_column_width=True)
+
+    st.text("\n")
+
+    #Rotasi
+    st.subheader("Rotasi")
+    if st.button('Citra Asli Rotasi'):
+            
+        original = Image.open('olaf.jpg')
+        st.image(original, use_column_width=True)
+    
+    imggambar= cv2.imread("olaf.jpg",-1)
+    st.write("Berikut hasil citra yang telah dilakukan operasi rotasi")
+
+    rows,cols = imggambar.shape[:2]
+    M = cv2.getRotationMatrix2D((cols/2,rows/2),90,1)
+    imgrotasi = cv2.warpAffine(imggambar,M,(cols,rows))
+    tampil_hor=np.concatenate((imggambar,imgrotasi),axis=1)
+
+    # Menampilkan hasil translasi di Streamlit
+    st.image(tampil_hor, caption="Hasil Rotasi", use_column_width=True)
+
+def morfCitra():
+    st.header("Morfologi Citra")
+    st.write("Morfologi Citra merupakan salah satu teknik dalam pengolahan citra yang berkaitan dengan struktur, bentuk, dan hubungan spasial antar objek dalam citra. Terdapat beberapa jenis operasi morfologi citra salah satunya adalah erosi dan dilasi.")
+    st.text("\n")
+
+    #Erosi
+    st.subheader("Erosi")
+    if st.button('Citra Asli Erosi'):
+            
+        original = Image.open('bitcoin.jpg')
+        st.image(original, use_column_width=True)
+    
+    imggambar= cv2.imread("bitcoin.jpg",-1)
+    st.write("Berikut hasil citra yang telah dilakukan operasi erosi")
+
+    imggambar = cv2.imread("bitcoin.jpg",0)
+    kernel = np.ones((5,5),np.uint8)
+    kernel2 = np.ones((1,1),np.uint8)
+
+    imgCanny = cv2.Canny(imggambar,10,150)
+    imgdilation5 = cv2.dilate(imgCanny,kernel,iterations=1)
+    imgErode = cv2.erode(imgdilation5,kernel2,iterations=1)
+
+    tampil_hor=np.concatenate((imgCanny,imgErode),axis=1)
+    
+    # Menampilkan hasil erosi di Streamlit
+    st.image(tampil_hor, caption="Hasil Erosi", use_column_width=True)
+
+    st.text("\n")
+
+    #Dilasi
+    st.subheader("Dilasi")
+    if st.button('Citra Asli Dilasi'):
+            
+        original = Image.open('daun.jpg')
+        st.image(original, use_column_width=True)
+    
+    imggambar= cv2.imread("daun.jpg",-1)
+    st.write("Berikut hasil citra yang telah dilakukan operasi dilasi")
+
+    imggambar = cv2.imread("daun.jpg",0)
+    kernel = np.ones((1,1),np.uint8)
+    kernel2 = np.ones((15,15),np.uint8)
+
+    imgCanny = cv2.Canny(imggambar,10,150)
+    imgdilation = cv2.dilate(imgCanny,kernel,iterations=1)
+    imgdilation2 = cv2.dilate(imgCanny,kernel2,iterations=1)
+    imgdilation3= ~imgdilation2
+
+    tampil_hor=np.concatenate((imggambar,imgdilation2),axis=0)
+    
+    # Menampilkan hasil erosi di Streamlit
+    st.image(tampil_hor, caption="Hasil Dilasi", use_column_width=True)
+
+    st.text("\n")
 
 def photo():
 
