@@ -16,7 +16,7 @@ def main():
 
     selected_box = st.sidebar.selectbox(
     'Choose one of the following',
-    ('Landing Page','Histogram','Transformasi Geometri', 'Morfologi Citra', 'Image Processing', 'Video', 'Face Detection', 'Feature Detection', 'Object Detection')
+    ('Landing Page','Histogram','Transformasi Geometri', 'Morfologi Citra', 'Thresholding', 'Filtering', 'Video', 'Face Detection', 'Feature Detection', 'Object Detection')
     )
     # pilihan menu
 
@@ -28,8 +28,10 @@ def main():
         transGeo()
     if selected_box == 'Morfologi Citra':
         morfCitra()
-    if selected_box == 'Image Processing':
+    if selected_box == 'Thresholding':
         photo()
+    if selected_box == 'Filtering':
+        filter()
     if selected_box == 'Video':
         video()
     if selected_box == 'Face Detection':
@@ -171,50 +173,124 @@ def morfCitra():
     st.text("\n")
 
 def photo():
+    # nama titlenya
+    st.header("Thresholding")
+    # nama deskripsinya
+    st.write("Thresholding merupakan salah satu segmentasi citra yang mana prosesnya didasarkan pada tingkat kecerahan atau gelap terangnya")
 
-    st.header("Thresholding, Edge Detection and Contours")
-    
-    if st.button('See Original Image of Tom'):
-        
-        original = Image.open('tom.jpg')
-        st.image(original, use_column_width=True)
-        
-    image = cv2.imread('tom.jpg')
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    
-    x = st.slider('Change Threshold value',min_value = 50,max_value = 255)  
+    # untuk melakukan upload file dalam bentuk jpg, jpeg, dan png
+    uploaded_file = st.file_uploader("Choose an image", type=["jpg", "jpeg", "png"])
+    # apbila file yang diup tidak kosong (ada isinya)
+    if uploaded_file is not None:
+        # maka file image yang diup akan dibaca
+        img = cv2.imdecode(np.fromstring(uploaded_file.read(), np.uint8), -1)
 
-    ret,thresh1 = cv2.threshold(image,x,255,cv2.THRESH_BINARY)
-    thresh1 = thresh1.astype(np.float64)
-    st.image(thresh1, use_column_width=True,clamp = True)
-    
-    st.text("Bar Chart of the image")
-    histr = cv2.calcHist([image],[0],None,[256],[0,256])
-    st.bar_chart(histr)
-    
-    st.text("Press the button below to view Canny Edge Detection Technique")
-    if st.button('Canny Edge Detector'):
-        image = load_image("jerry.jpg")
-        edges = cv2.Canny(image,50,300)
-        cv2.imwrite('edges.jpg',edges)
-        st.image(edges,use_column_width=True,clamp=True)
-      
-    y = st.slider('Change Value to increase or decrease contours',min_value = 50,max_value = 255)     
-    
-    if st.button('Contours'):
-        im = load_image("jerry1.jpg")
-          
-        imgray = cv2.cvtColor(im,cv2.COLOR_BGR2GRAY)
-        ret,thresh = cv2.threshold(imgray,y,255,0)
-        image, contours, hierarchy = cv2.findContours(thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
-        
-        img = cv2.drawContours(im, contours, -1, (0,255,0), 3)
- 
-        
-        st.image(thresh, use_column_width=True, clamp = True)
-        st.image(img, use_column_width=True, clamp = True)
-         
+        # kemudian akan dicek apakah file image yang diup sudah grayscale atau belum
+        # jika sudah grayscale
+        if len(img.shape) == 2 or img.shape[2] == 1:
+            # maka tidak perlu dilakukan konversi
+            image = img 
+        # apabila belum grayscale
+        else:
+            # maka akan dilakukan perubahan atau konversi ke grayscale
+            image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
+        # setelah itu dilakukanlah thresholding dari file yang telah diup
+        x = st.slider('Change Threshold value', min_value=50, max_value=255)
+        ret, thresh1 = cv2.threshold(image, x, 255, cv2.THRESH_BINARY)
+        # kemudian ditampilkan hasil dari thresholdingnya
+        st.image(thresh1, use_column_width=True, clamp=True)
+
+# fungsi dari filter mean harmonik beserta argumennya img dan kernel_size yang bernilai 3
+def apply_harmonic_mean_filter(img, kernel_size=3):
+    # melakukan calculasi padding yang dibutuhkan di tepi gambar untuk mengakomodasikan kernel filter
+    pad = kernel_size // 2
+    # membuat array kosong
+    filtered_img = np.zeros_like(img)
+
+    # melakukan perulangan untuk setiap piksel di dalam image, tidak termasuk pixel batas karena padiing
+    for i in range(pad, img.shape[0] - pad):
+        for j in range(pad, img.shape[1] - pad):
+            # melakukan ekstrasi pada image berdasarkan ukuran kernal
+            patch = img[i - pad:i + pad + 1, j - pad:j + pad + 1]
+            # melakukan perhitungan harmonic mean dari nilai pixel dan menetapkannya ke piksel yang sesuai pada gambar yang difilter
+            filtered_img[i, j] = len(patch.flatten()) / np.sum(1 / patch.flatten())
+    # mengonversi gambar yang difilter menjadi bilangan bulat 8-bit yang tidak ditandatangani (format gambar umum) dan mengembalikannya.
+    return filtered_img.astype(np.uint8)
+
+# fungsi dari filter mean harmonik beserta argumennya img dan kernel_size yang bernilai 5
+def apply_harmonic_mean_filter5(img, kernel_size=5):
+    # melakukan calculasi padding yang dibutuhkan di tepi gambar untuk mengakomodasikan kernel filter
+    pad = kernel_size // 2
+    # membuat array kosong
+    filtered_img = np.zeros_like(img)
+
+    # melakukan perulangan untuk setiap piksel di dalam image, tidak termasuk pixel batas karena padiing
+    for i in range(pad, img.shape[0] - pad):
+        for j in range(pad, img.shape[1] - pad):
+            # melakukan ekstrasi pada image berdasarkan ukuran kernal
+            patch = img[i - pad:i + pad + 1, j - pad:j + pad + 1]
+            # melakukan perhitungan harmonic mean dari nilai pixel dan menetapkannya ke piksel yang sesuai pada gambar yang difilter
+            filtered_img[i, j] = len(patch.flatten()) / np.sum(1 / patch.flatten())
+
+    # mengonversi gambar yang difilter menjadi bilangan bulat 8-bit yang tidak ditandatangani (format gambar umum) dan mengembalikannya.
+    return filtered_img.astype(np.uint8)
+
+# fungsi dari filter mean harmonik beserta argumennya img dan kernel_size yang bernilai 9
+def apply_harmonic_mean_filter9(img, kernel_size=9):
+    # melakukan calculasi padding yang dibutuhkan di tepi gambar untuk mengakomodasikan kernel filter
+    pad = kernel_size // 2
+    # membuat array kosong
+    filtered_img = np.zeros_like(img)
+
+    # melakukan perulangan untuk setiap piksel di dalam image, tidak termasuk pixel batas karena padiing
+    for i in range(pad, img.shape[0] - pad):
+        for j in range(pad, img.shape[1] - pad):
+            # melakukan ekstrasi pada image berdasarkan ukuran kernal
+            patch = img[i - pad:i + pad + 1, j - pad:j + pad + 1]
+            # melakukan perhitungan harmonic mean dari nilai pixel dan menetapkannya ke piksel yang sesuai pada gambar yang difilter
+            filtered_img[i, j] = len(patch.flatten()) / np.sum(1 / patch.flatten())
+
+    # mengonversi gambar yang difilter menjadi bilangan bulat 8-bit yang tidak ditandatangani (format gambar umum) dan mengembalikannya.
+    return filtered_img.astype(np.uint8)
+
+def filter():
+    # nama titlenya
+    st.header("Filtering Mean Harmonik")
+    # nama deskripsinya
+    st.write("Filtering Mean Harmonik merupakan salah satu metode yang"+
+             "memiliki teknik cara bekerja dengan mengubah atau menggantikan"+
+             "intensitas pixel dengan rata rata pixel dari pixel tetangganya.")
+    # untuk melakukan upload file dalam bentuk jpg, jpeg, dan png
+    uploaded_file = st.file_uploader("Choose an image", type=["jpg", "jpeg", "png"])
+    # jika file tidak kosong (ada isinya)
+    if uploaded_file is not None:
+        # maka file image akan dibaca
+        img = cv2.imdecode(np.fromstring(uploaded_file.read(), np.uint8), 1)
+
+        # kemudian akan dilakukan filtering sesuai dengan fungsi yang telah dibuat
+        # akan dilakukan filtering dengan kernel 3
+        filtered_img = apply_harmonic_mean_filter(img)
+        # akan dilakukan filtering dengan kernel 5
+        filtered_img5 = apply_harmonic_mean_filter5(img)
+        # akan dilakukan filtering dengan kernel 9
+        filtered_img9 = apply_harmonic_mean_filter9(img)
+        
+        # ini merupakan caption yang berada di bawah gambar
+        captions = ["Original Image", "Filtering Mean Harmonik (Kernel 3)", "Filtering Mean Harmonik (Kernel 5)", "Filtering Mean Harmonik (Kernel 9)"]
+        # akan menampilkan gambar orignal beserta captionnya
+        st.image(img, width=250, caption=captions[0])
+        st.write("")
+        # akan menampilkan gambar yang telah difiltering dengan kernel 3 beserta captionnya
+        st.image(filtered_img, width=250, caption=captions[1])
+        st.write("")
+        # akan menampilkan gambar yang telah difiltering dengan kernel 5 beserta captionnya
+        st.image(filtered_img5, width=250, caption=captions[2])
+        st.write("")
+        # akan menampilkan gambar yang telah difiltering dengan kernel 9 beserta captionnya
+        st.image(filtered_img9, width=250, caption=captions[3])
+        
+            
     
 def video():
     uploaded_file = st.file_uploader("Choose a video file to play")
